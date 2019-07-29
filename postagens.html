@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Brainly IFC</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/open-iconic/1.1.1/font/css/open-iconic-bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+		<link rel="stylesheet" href="./style/style.css">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
+	</head>
+	<body>
+
+		<nav class="navbar navbar-expand-md bg-dark navbar-dark">
+			<a class="navbar-brand" href="./index.html">Feminismo Ativo</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+			<div id="navbarNavDropdown" class="navbar-collapse collapse navbar-custom">
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Categorias</a>
+						<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+							<a class="dropdown-item" onclick="enviarCategoria(this.id)" id="violencia" href="./enquetes.html">Violência</a>
+							<a class="dropdown-item" onclick="enviarCategoria(this.id)" id="estupro" href="./enquetes.html">Estupro</a>
+						</div>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="./contato.html">Contato </a>
+					</li>
+					<button class="btn btn-outline-success" onclick="entrarCriarEnquete()">Crie sua enquete </button>
+				</ul>
+				<ul class="navbar-nav">
+					<button class="btn btn-outline-danger" onclick="entrarPolicia()"><b>Denuncie! </b></button>
+					<li class="nav-item">
+						<a class="nav-link" href="./registro.html"><span class="oi oi-person"></span> Registrar</a>
+					</li>
+					<li class="nav-item" id = "logged">
+
+					</li>
+				</ul>
+
+			</div>
+		</nav>
+		<br>
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12">
+					<div id="titulo">
+						
+					</div>
+					<div id="principais_respostas" class="card mb-3"></div>
+					<form>
+						<div class="form-group">
+							<label for="comment">Deixe sua resposta: </label>
+							<textarea class="form-control" rows="5" id="resposta" name="text"></textarea>
+						</div>
+						<button type="submit" onclick="enviarResposta()" class="btn btn-primary">Enviar</button>
+					</form>
+				</div>
+			</div>
+		</div>
+		<footer style="bottom: 0;" class="footer mt-auto py-3">
+			<div class="container">
+				<hr class="featurette-divider">
+				<p>© 2018-2019 IFC-Enterprises</p>
+			</div>
+		</footer>
+
+		<script src = "/socket.io/socket.io.js"></script>
+		<script>
+			var logado = localStorage.getItem("logado")
+			if ( logado == 1){
+				document.getElementById("logged").innerHTML = '<a class="nav-link" href="" onclick = "logout()"><span class="oi oi-account-logout"></span></span> Sair</a>'
+			}
+			else{
+				document.getElementById("logged").innerHTML = '<a class="nav-link" href="./login.html"><span class="oi oi-account-login"></span></span> Entrar</a>'
+			}
+			function logout() {
+				alert("Você clicou para sair!");
+				localStorage.setItem("logado", 0)
+			}
+			var socket = io();
+			window.onload = function(){
+				socket.emit("requerimentoPostagens", localStorage.getItem("id_enquete"));
+				socket.emit("tituloEnquete", localStorage.getItem("id_enquete"));
+			}
+			socket.on("titulo", function(data){
+				var titulo = data[0].ass_enquete;
+				document.getElementById("titulo").innerHTML = '<h1>' + titulo + '</h1>';
+			})
+			socket.on("respostasSelecionadas", function(data){
+				for (let item = 0; item < data.length; item++){
+					data_hora = data[item].data_post.replace("T", " ");
+					var resposta = {postagem: data[item].conteudo_post, data_hora: data_hora.slice(0, 19)};
+					document.getElementById("principais_respostas").innerHTML += '<div class="card-body"><p class="card-text">' + resposta.postagem + '</p><p class="card-text"><small class="text-muted">' + resposta.data_hora + '</small></p></div>';
+				}
+			});
+			function enviarResposta(){
+				if (localStorage.getItem("logado") == 0){
+					alert("Você deve estar logado para responder uma pergunta!")
+				}
+				else{
+					var resposta = document.getElementById("resposta").value;
+					var data_hora = new Date();
+					var data_hora = data_hora.getFullYear() + "-" + (data_hora.getMonth() + 1) + "-" + data_hora.getDate() + " " + data_hora.getHours() + ":" + data_hora.getMinutes() + ":" + data_hora.getSeconds();
+					socket.emit("enviarResposta", {postagem: resposta, data_hora: data_hora, id_enquete: localStorage.getItem("id_enquete")});
+					location.reload();
+				}
+			}
+			function entrarPolicia() {
+				window.open("http://www.pm.sc.gov.br/cidadao/denuncia.html", "__blank");
+			}
+			function entrarCriarEnquete() {
+				if (localStorage.getItem("logado") == 0){
+					alert("Você deve estar logado para fazer uma pergunta!");
+				}
+				else{
+					window.location = "./criar_enquete.html";
+				}
+			}
+			function enviarCategoria(id_clicado) {
+				localStorage.setItem("id_categoria", id_clicado);
+			}
+		</script>
+	</body>
+</html>
