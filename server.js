@@ -66,7 +66,7 @@ function buscarEnquetes(con, id_categoria, callback){
 	})
 }
 
-function buscarTitulo(con, id_enquete, callback){
+function buscarDisciplina(con, id_enquete, callback){
 	const sql = "SELECT ass_enquete FROM Enquete WHERE id_enquete = ?";
 	const id = [[id_enquete]];
 	con.query(sql, [id], function(error, results, fields){
