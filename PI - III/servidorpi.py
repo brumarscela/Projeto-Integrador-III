@@ -22,4 +22,8 @@ def alterarPessoa():
 def exibirMensagem():
     return render_template ("ExibirMensagem.html")
 
+@app.route("/cadastrarpergunta")
+def cadastrarMensagem():
+    return render_template ("CadastratMensagem.html")
+
 app.run(debug=True)
